@@ -1,0 +1,34 @@
+{
+  "name": "Welcome to the Internet 2 Electric Boogaloo",
+  "component": false,
+  "authors": "Luna",
+  "about_url": "TODO: Put your theme's public repo or Meta topic URL here",
+  "license_url": "TODO: Put your theme's LICENSE URL here",
+  "learn_more": "TODO",
+  "theme_version": "0.0.1",
+  "minimum_discourse_version": null,
+  "maximum_discourse_version": null,
+  "assets": {
+    "rye": "assets/Rye-Regular.ttf",
+    "atkinson_hyperlegible": "assets/AtkinsonHyperlegible-Regular.ttf",
+    "bg_light": "assets/white-diamond-dark.png",
+    "bg_dark": "assets/white-diamond.png"
+  },
+  "modifiers": {},
+  "color_schemes": {
+    "Circus Dark": {
+      "primary": "d8d4cc",
+      "secondary": "121325",
+      "tertiary": "0da9b1",
+      "quaternary": "ec5d37",
+      "header_background": "1d1e38",
+      "header_primary": "d4be9f",
+      "highlight": "a87137",
+      "danger": "d23b3b",
+      "success": "1ca551",
+      "love": "fa6c8d",
+      "selected": "053663",
+      "hover": "2a2c48"
+    }
+  }
+}

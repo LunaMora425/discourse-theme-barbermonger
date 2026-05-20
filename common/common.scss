@@ -1,0 +1,253 @@
+@font-face {
+  font-family: Rye;
+  src: url($rye) format("truetype");
+}
+
+@font-face {
+  font-family: "Atkinson Hyperlegible", sans-serif;
+  src: url($atkinson_hyperlegible) format("truetype");
+}
+
+body {
+  background-size: auto;
+  background-image: var(--bg-img);
+}
+
+// =====================================================================
+//  Barbermonger - colour overrides
+//  Companion to the "Barbermonger Dark" colour scheme in about.json.
+// ---------------------------------------------------------------------
+//  WHY THIS FILE EXISTS
+//
+//  Discourse derives ~100 colour variables from the palette seeds using
+//  dark-light-diff(), which scales a colour's *lightness* up or down but
+//  keeps its hue + saturation. That means the seed `primary` is BOTH your
+//  body-text colour AND the source of every neutral grey: borders, hover
+//  states, code blocks, mention backgrounds, the --primary-50...400 ramp.
+//
+//  If `primary` is the dun (#d4be9f, a warm/saturated tan) those derived
+//  greys all become dark TANS, and Discourse reuses them as backgrounds,
+//  so the whole UI picks up an orange wash.
+//
+//  THE FIX (done in two places):
+//   1. about.json seeds `primary` as a low-saturation WARM-neutral grey
+//      (#d8d4cc). The whole derived ramp therefore computes as muted
+//      warm greys that sit nicely on the #121325 navy background -
+//      no orange wash, and muted text reads as a soft tan-grey instead
+//      of periwinkle. (Use "d2d2d2" for pure neutral grey instead.)
+//   2. The single override below puts the full-strength dun back, but
+//      only on the text layer. Nothing else inherits the tan.
+//
+//  IMPORTANT - two colour layers:
+//  Overrides in this file only affect styles written as var(--x). Some
+//  core styles bake the SCSS $primary-medium / $primary-low values to a
+//  literal hex at build time and ignore CSS-variable overrides. The SEED
+//  (about.json) is the only lever that moves BOTH layers, since the baked
+//  values are derived from it. If an element won't respond to an override
+//  here, inspect it: a `var(--x)` rule -> override the var below; a baked
+//  hex -> target that selector directly, or adjust the seed.
+//
+//  This replaces the per-class DevTools approach: you override colours at
+//  the CSS-variable layer here, and the change cascades everywhere.
+// =====================================================================
+
+:root {
+  // --- Body text -------------------------------------------------------
+  // --primary feeds post bodies, topic titles and strong text.
+  --primary: #d4be9f; // dun
+
+  // --- Muted / secondary text -----------------------------------------
+  // Keeps de-emphasised text in the tan family rather than neutral grey.
+  // Delete these two lines if you'd prefer grey metadata/excerpts.
+  --primary-high: #c2ad8b; // excerpts, de-emphasised text
+  --primary-medium: #9c8f72; // metadata, "read" topic titles
+
+  // --- Blue-tinted muted text (the periwinkle problem) ----------------
+  // Some muted text doesn't derive from `primary` at all. It uses the
+  // dark-light-choose() blends below, which in a DARK scheme return the
+  // lightened NAVY secondary ($secondary-high / -medium) - that's the
+  // periwinkle. Changing the `primary` seed can't fix these; you re-point
+  // the blend itself. Overriding the shared blend cascades to EVERY
+  // component that uses it (category descriptions, topic excerpts, etc.),
+  // so you fix it once instead of per component.
+  --primary-med-or-secondary-high: #c2ad8b; // category descriptions, excerpts
+  --primary-med-or-secondary-med: #c2ad8b;
+  // belt-and-suspenders: the component alias that points at the blend
+  --category-boxes-description-text-color: #c2ad8b;
+  // Leave the "*-or-secondary-low" blends alone - those are borders/
+  // surfaces, not text, and re-colouring them would tint your boxes.
+
+  // NOTE: --primary-rgb (used in rgba() overlays) is intentionally left
+  // as the neutral derived value so faint overlays stay neutral. Add
+  //   --primary-rgb: 212, 190, 159;
+  // here if you ever want those overlays warm too.
+
+  // --- Decorative text-shadow colours ---------------------------------
+  // JCink used these as glows under the accent text. Discourse has no
+  // palette seed for them, so they live as plain custom properties.
+  --color-primary-shadow: #5f1a07; // blood-red    (under cinnabar / quaternary)
+  --color-secondary-shadow: #053663; // berkeley-blue (under verdigris / tertiary)
+}
+
+// Example: re-create the JCink glow on accent elements.
+// Uncomment and point at whatever you want to glow.
+//
+// .btn-primary {
+//   text-shadow: 0 1px 3px var(--color-secondary-shadow);
+// }
+
+// =====================================================================
+//  CHEAT-SHEET - which derived variable lands where
+//  (pulled from Discourse's color_definitions.scss; override any of
+//   these here the same way if a specific spot still looks wrong)
+//
+//  TEXT (kept in the tan family above)
+//    --primary                 body text, strong text
+//    --title-color    => --primary        topic/category titles
+//    --primary-high   => --excerpt-color  excerpts
+//    --primary-medium => --metadata-color, --title-color--read
+//
+//  STRUCTURE / BACKGROUNDS (kept neutral via the grey seed - leave alone)
+//    --primary-very-low                very subtle raised backgrounds
+//    --primary-low    => --content-border-color, --table-border-color,
+//                        --mention-background-color, --float-kit-arrow-stroke
+//    --primary-low-mid                 dividers, secondary borders
+//    --primary-400    => --input-border-color
+//    --primary-50 / -100 => --hljs-bg, --inline-code-bg (code blocks)
+//
+//  ACCENTS (from the palette seeds, not primary)
+//    --tertiary    verdigris  links, primary buttons, active states
+//    --quaternary  cinnabar   secondary accent (banners, some buttons)
+//    --highlight   gold       search / quote highlight background
+//    --d-selected  berkeley-blue  selected rows
+// =====================================================================
+
+// About Us Page
+section.about__admins,
+.about__stats-item.admins,
+.user-info[data-username="Barbermonger"] {
+  display: none;
+}
+
+// Emoji fixes
+img.emoji {
+  height: 1.4em;
+  width: 1.4em;
+}
+
+img.emoji.only-emoji {
+  width: 50px;
+  height: 50px;
+}
+
+.chat-channel-icon {
+  img.emoji {
+    height: 1em;
+    width: 1em;
+  }
+}
+
+// CHAT FIXES
+// body:not(.has-sidebar-page).has-full-page-chat {
+//   #main-outlet-wrapper {
+//     max-height: calc(100dvh - var(--header-offset));
+//   }
+
+//     .chat-channel {
+//       height: calc(
+//         var(--composer-vh, 1vh) * 100 - var(--main-outlet-offset, 0px) -
+//           1px - var(--chat-header-offset, 0) - var(--composer-height, 0px) - 82px
+//       );
+//     }
+// }
+
+// fixing chat window when new topic or reply is open
+.chat-drawer-outlet-container {
+  padding-bottom: 0 !important;
+  right: 10px !important;
+}
+
+.has-full-page-chat {
+  .full-page-chat {
+    border-left: none;
+    border-right: none;
+  }
+
+  .chat-pinned-messages-list.chat-messages-scroller {
+    max-height: 80vh;
+  }
+
+  .c-channel-info,
+  .chat-browse-view {
+    box-sizing: border-box;
+    max-height: 80vh;
+    overflow-y: scroll;
+    max-width: unset;
+  }
+}
+
+.has-full-page-chat:not(.discourse-sidebar) .full-page-chat .channels-list {
+  max-height: 90vh;
+}
+
+// CUSTOM CATEGORY GROUPS
+@media screen and (min-width: 800px) {
+  .custom-category-group-rp-resources .custom-category-group {
+    justify-items: center;
+  }
+
+  .custom-category-group {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.custom-category-group-toggle {
+  display: flex;
+  align-items: center;
+  padding-top: 0.5em;
+  --s: 1.2em;
+  --d: 0.3em;
+  --c: 0.8em;
+  padding: 0 calc(var(--s) + 0.5em) var(--d);
+  line-height: 1.8;
+  background:
+    conic-gradient(
+        at left var(--s) bottom var(--d),
+        #0000 25%,
+        #0008 0 37.5%,
+        #0004 0
+      )
+      0 / 50% 100% no-repeat,
+    conic-gradient(
+        at right var(--s) bottom var(--d),
+        #0004 62.5%,
+        #0008 0 75%,
+        #0000 0
+      )
+      100% / 50% 100% no-repeat;
+  clip-path: polygon(
+    0 var(--d),
+    var(--s) var(--d),
+    var(--s) 0,
+    calc(100% - var(--s)) 0,
+    calc(100% - var(--s)) var(--d),
+    100% var(--d),
+    calc(100% - var(--c)) calc(50% + var(--d) / 2),
+    100% 100%,
+    calc(100% - var(--s) - var(--d)) 100%,
+    calc(100% - var(--s) - var(--d)) calc(100% - var(--d)),
+    calc(var(--s) + var(--d)) calc(100% - var(--d)),
+    calc(var(--s) + var(--d)) 100%,
+    0 100%,
+    var(--c) calc(50% + var(--d) / 2)
+  );
+  background-color: var(--quaternary);
+  width: 100%;
+  box-sizing: border-box;
+  justify-content: center;
+  margin: 10px 0 10px;
+
+  .d-icon {
+    color: var(--primary);
+  }
+}
