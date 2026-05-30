@@ -14,112 +14,110 @@ body {
 }
 
 // =====================================================================
-//  Barbermonger - colour overrides
+//  Barbermonger - theme overrides
 //  Companion to the "Barbermonger Dark" colour scheme in about.json.
 // ---------------------------------------------------------------------
-//  WHY THIS FILE EXISTS
+//  The colour work now lives almost entirely in about.json. Because that
+//  file PINS the derived tints (the full primary ramp, the secondary
+//  tints, and the muted-text blends) to flat navy / flat dun values, it
+//  sets the SCSS source variables directly - so it fixes BOTH the baked
+//  styles and the var(--*) styles in one place. No tint chasing, no DOM
+//  walking.
 //
-//  Discourse derives ~100 colour variables from the palette seeds using
-//  dark-light-diff(), which scales a colour's *lightness* up or down but
-//  keeps its hue + saturation. That means the seed `primary` is BOTH your
-//  body-text colour AND the source of every neutral grey: borders, hover
-//  states, code blocks, mention backgrounds, the --primary-50...400 ramp.
-//
-//  If `primary` is the dun (#d4be9f, a warm/saturated tan) those derived
-//  greys all become dark TANS, and Discourse reuses them as backgrounds,
-//  so the whole UI picks up an orange wash.
-//
-//  THE FIX (done in two places):
-//   1. about.json seeds `primary` as a low-saturation WARM-neutral grey
-//      (#d8d4cc). The whole derived ramp therefore computes as muted
-//      warm greys that sit nicely on the #121325 navy background -
-//      no orange wash, and muted text reads as a soft tan-grey instead
-//      of periwinkle. (Use "d2d2d2" for pure neutral grey instead.)
-//   2. The single override below puts the full-strength dun back, but
-//      only on the text layer. Nothing else inherits the tan.
-//
-//  IMPORTANT - two colour layers:
-//  Overrides in this file only affect styles written as var(--x). Some
-//  core styles bake the SCSS $primary-medium / $primary-low values to a
-//  literal hex at build time and ignore CSS-variable overrides. The SEED
-//  (about.json) is the only lever that moves BOTH layers, since the baked
-//  values are derived from it. If an element won't respond to an override
-//  here, inspect it: a `var(--x)` rule -> override the var below; a baked
-//  hex -> target that selector directly, or adjust the seed.
-//
-//  This replaces the per-class DevTools approach: you override colours at
-//  the CSS-variable layer here, and the change cascades everywhere.
+//  This file is therefore reserved for the only two things a colour
+//  palette CANNOT express:
+//    1. Role reassignments  - making an element use a different role
+//                             than Discourse assigns it.
+//    2. Decorative tokens   - colours with no Discourse slot at all.
 // =====================================================================
 
 :root {
-  // --- Body text -------------------------------------------------------
-  // --primary feeds post bodies, topic titles and strong text.
-  --primary: #d4be9f; // dun
-
-  // --- Muted / secondary text -----------------------------------------
-  // Keeps de-emphasised text in the tan family rather than neutral grey.
-  // Delete these two lines if you'd prefer grey metadata/excerpts.
-  --primary-high: #c2ad8b; // excerpts, de-emphasised text
-  --primary-medium: #9c8f72; // metadata, "read" topic titles
-
-  // --- Blue-tinted muted text (the periwinkle problem) ----------------
-  // Some muted text doesn't derive from `primary` at all. It uses the
-  // dark-light-choose() blends below, which in a DARK scheme return the
-  // lightened NAVY secondary ($secondary-high / -medium) - that's the
-  // periwinkle. Changing the `primary` seed can't fix these; you re-point
-  // the blend itself. Overriding the shared blend cascades to EVERY
-  // component that uses it (category descriptions, topic excerpts, etc.),
-  // so you fix it once instead of per component.
-  --primary-med-or-secondary-high: #c2ad8b; // category descriptions, excerpts
-  --primary-med-or-secondary-med: #c2ad8b;
-  // belt-and-suspenders: the component alias that points at the blend
-  --category-boxes-description-text-color: #c2ad8b;
-  // Leave the "*-or-secondary-low" blends alone - those are borders/
-  // surfaces, not text, and re-colouring them would tint your boxes.
-
-  // NOTE: --primary-rgb (used in rgba() overlays) is intentionally left
-  // as the neutral derived value so faint overlays stay neutral. Add
-  //   --primary-rgb: 212, 190, 159;
-  // here if you ever want those overlays warm too.
-
-  // --- Decorative text-shadow colours ---------------------------------
-  // JCink used these as glows under the accent text. Discourse has no
-  // palette seed for them, so they live as plain custom properties.
-  --color-primary-shadow: #5f1a07; // blood-red    (under cinnabar / quaternary)
-  --color-secondary-shadow: #053663; // berkeley-blue (under verdigris / tertiary)
+  // --- Decorative text-shadow colours (no palette slot) ----------------
+  // JCink used these as glows under accent text. Apply them in custom
+  // rules via text-shadow where you want the effect.
+  --color-primary-shadow: #5f1a07; // blood-red
+  --color-tertiary-shadow: #053663; // berkeley-blue
 }
 
-// Example: re-create the JCink glow on accent elements.
-// Uncomment and point at whatever you want to glow.
+// --- Role reassignment: make link-like elements verdigris ------------
+// Discourse deliberately renders many clickable things in the TEXT colour
+// (primary), not the link colour. Reversing that is the one area the
+// palette can't reach - but it's a small, known set, not a DOM walk.
+// If any selector below misses (Discourse markup shifts between versions),
+// inspect the element, find the rule actually setting `color`, and send it
+// to me - that's how we nailed the category badges.
+
+// Category badges (titles + subcategory links).
+// The name uses `--category-badge-title-color: currentcolor`, so it
+// inherits from `.badge-category` (core sets that to --primary-high).
+// Recolour the badge and the name follows. NOTE: categories that have a
+// custom text colour set in their category settings will keep that colour.
+.badge-category__wrapper .badge-category {
+  color: var(--tertiary);
+}
+
+// Usernames + mentions (they link to profiles).
+// Core colours these via `.names > span a` -> --primary-high-or-secondary-low
+// (a blend; pinning secondary-low in about.json does NOT reach it, so we
+// target the selector directly). Add `!important` if a group/staff flair
+// colour outranks this on certain users.
+.names > span a,
+a.username,
+a.mention,
+.chat-message-info__username__name {
+  color: var(--tertiary);
+}
+
+// Flat / text buttons - post controls (reply, edit, link, share) and
+// topic footer. Targets icon + label. Trim if you want some left muted.
+.post-controls .btn-flat,
+.post-controls .btn-flat .d-icon,
+.topic-footer-buttons .btn-flat,
+.topic-footer-buttons .btn-flat .d-icon {
+  color: var(--tertiary);
+}
+
+// Topic-list titles
+.topic-list-item .title,
+.latest-topic-list-item .title,
+.featured-topic a.title {
+  color: var(--tertiary);
+}
+
+// Any spare text that should be primary
+.chat-message-separator-date .chat-message-separator__text {
+  color: var(--primary);
+}
+
+// --- OPTIONAL: two-tone surfaces (JCink page vs box) -----------------
+// JCink had two independent background colours; Discourse has one
+// `secondary` + derived tints. If you want category boxes raised to the
+// space-cadet contrast tone like JCink, uncomment and confirm the
+// winning selector for your category style via DevTools.
 //
-// .btn-primary {
-//   text-shadow: 0 1px 3px var(--color-secondary-shadow);
+// .category-boxes .category-box,
+// .category-list-item {
+//   background: #1d1e38; // space-cadet
 // }
 
 // =====================================================================
-//  CHEAT-SHEET - which derived variable lands where
-//  (pulled from Discourse's color_definitions.scss; override any of
-//   these here the same way if a specific spot still looks wrong)
+//  REFERENCE - the logic for pinning, so you can pin any straggler
+//  yourself. Inspect an element, read the winning var(--x):
+//    * a SLOT (primary/secondary/tertiary/...) -> change it in about.json
+//    * a TINT (-low/-medium/-high, the numbered ramp, *-or-secondary-*)
+//      -> PIN it in about.json (it has a !default, so your value wins,
+//         and it reaches baked + var usages together)
+//    * a COMPONENT alias -> it points at a slot/tint; pin that instead
+//    * a ROLE you want changed (title=link) -> a rule here, like above
 //
-//  TEXT (kept in the tan family above)
-//    --primary                 body text, strong text
-//    --title-color    => --primary        topic/category titles
-//    --primary-high   => --excerpt-color  excerpts
-//    --primary-medium => --metadata-color, --title-color--read
-//
-//  STRUCTURE / BACKGROUNDS (kept neutral via the grey seed - leave alone)
-//    --primary-very-low                very subtle raised backgrounds
-//    --primary-low    => --content-border-color, --table-border-color,
-//                        --mention-background-color, --float-kit-arrow-stroke
-//    --primary-low-mid                 dividers, secondary borders
-//    --primary-400    => --input-border-color
-//    --primary-50 / -100 => --hljs-bg, --inline-code-bg (code blocks)
-//
-//  ACCENTS (from the palette seeds, not primary)
-//    --tertiary    verdigris  links, primary buttons, active states
-//    --quaternary  cinnabar   secondary accent (banners, some buttons)
-//    --highlight   gold       search / quote highlight background
-//    --d-selected  berkeley-blue  selected rows
+//  Find every variable + its resolved value (run in the JS console):
+//    const r = getComputedStyle(document.documentElement);
+//    [...document.styleSheets]
+//      .flatMap(s => { try { return [...s.cssRules] } catch { return [] } })
+//      .filter(x => x.selectorText && x.selectorText.includes(':root'))
+//      .flatMap(x => [...x.style].filter(p => p.startsWith('--')))
+//      .filter((v,i,a) => a.indexOf(v) === i).sort()
+//      .forEach(v => console.log(v, r.getPropertyValue(v).trim()));
 // =====================================================================
 
 // About Us Page
